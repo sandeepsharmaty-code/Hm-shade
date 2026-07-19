@@ -37,7 +37,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_wrap(const MaterialManagementScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(
       find.text('No pigment records found. Tap + to add one.'),
@@ -53,7 +53,7 @@ void main() {
         );
 
     await tester.pumpWidget(_wrap(const MaterialManagementScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Iron Oxide Red'), findsOneWidget);
   });
@@ -66,11 +66,11 @@ void main() {
         );
 
     await tester.pumpWidget(_wrap(const MaterialManagementScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(find.text('Iron Oxide Red'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(ChoiceChip, 'Dye'));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Iron Oxide Red'), findsNothing);
     expect(

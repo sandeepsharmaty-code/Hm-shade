@@ -40,7 +40,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_wrap(const FormulaListScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('No formulas exist yet. Tap + to add one.'), findsOneWidget);
   });
@@ -66,7 +66,7 @@ void main() {
         );
 
     await tester.pumpWidget(_wrap(const FormulaListScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Classic Nail Polish'), findsOneWidget);
     expect(find.text('Ruby Trial 1'), findsOneWidget);
@@ -82,11 +82,11 @@ void main() {
     );
 
     await tester.pumpWidget(_wrap(const FormulaListScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(find.text('Draft Trial'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(ChoiceChip, TrialStatus.approved.label));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Draft Trial'), findsNothing);
   });

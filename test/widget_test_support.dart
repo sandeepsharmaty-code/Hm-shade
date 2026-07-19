@@ -38,11 +38,34 @@
 ///                engines, which none of those ten screens use
 ///                directly (only new_shade_screen.dart does, and it
 ///                isn't in the R6-003 list).
+///
+///                Also provides settle() (R7.1 fix): LoadingView
+///                (lib/widgets/loading_view.dart) uses an
+///                *indeterminate* CircularProgressIndicator, which
+///                repeats forever by design. tester.pumpAndSettle()
+///                cannot tell "still loading" from "stuck forever" —
+///                it just keeps pumping the spinner's frames until it
+///                hits its own default timeout, which is exactly
+///                Duration(minutes: 10). That is the literal source
+///                of the "TimeoutException after 10 minutes" CI hit.
+///                settle() wraps the exact same pumpAndSettle() call
+///                with an explicit 10-second timeout instead, so any
+///                future recurrence of this fails fast and clearly —
+///                seconds, not the whole CI job's time budget — while
+///                behaving identically to pumpAndSettle() for every
+///                test that genuinely settles quickly, which is all
+///                of them against this harness's fast in-memory
+///                database.
 /// Change History:
 ///   1.0.0 - Repair Sprint R6 (Production Readiness & QA) - Initial
 ///           creation.
+///   1.1.0 - R7.1 (Final Release Validation fix) - Added settle()
+///           and ensureSqfliteFfiInitialized() — see the two notes
+///           above. No change to what is registered or how.
 library;
 
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:hue_muse_shade_ai/core/database/database_helper.dart';
@@ -201,8 +224,38 @@ const Map<String, List<String>> _kTestSchemaColumns = <String, List<String>>{
   ],
 };
 
+/// Same as `tester.pumpAndSettle()`, but with an explicit 10-second
+/// timeout instead of pumpAndSettle()'s own 10-minute default — see
+/// this file's header for why that default is the literal source of
+/// the "TimeoutException after 10 minutes" CI hit. Behaves exactly
+/// like pumpAndSettle() otherwise (same pump interval, same engine
+/// phase) for any test that genuinely settles, which is every test
+/// against this harness's fast in-memory database.
+Future<void> settle(WidgetTester tester) {
+  return tester.pumpAndSettle(
+    const Duration(milliseconds: 100),
+    EnginePhase.sendSemanticsUpdate,
+    const Duration(seconds: 10),
+  );
+}
+
+bool _sqfliteFfiInitialized = false;
+
+/// Initializes the sqflite FFI loader once per test isolate instead
+/// of once per test. sqfliteFfiInit() is safe to call repeatedly, but
+/// every widget test file's setUp() (which runs before *each* test,
+/// not once per file) calling it before every single test adds
+/// redundant initialization overhead that compounds across a suite
+/// this size.
+void ensureSqfliteFfiInitialized() {
+  if (!_sqfliteFfiInitialized) {
+    sqfliteFfiInit();
+    _sqfliteFfiInitialized = true;
+  }
+}
+
 Future<Database> _openTestDatabase() async {
-  sqfliteFfiInit();
+  ensureSqfliteFfiInitialized();
   return databaseFactoryFfi.openDatabase(
     inMemoryDatabasePath,
     options: OpenDatabaseOptions(

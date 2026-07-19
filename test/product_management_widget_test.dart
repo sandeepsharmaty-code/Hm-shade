@@ -38,7 +38,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_wrap(const ProductManagementScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('No products exist yet. Tap + to add one.'), findsOneWidget);
   });
@@ -57,7 +57,7 @@ void main() {
     );
 
     await tester.pumpWidget(_wrap(const ProductManagementScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Classic Nail Polish'), findsOneWidget);
     expect(find.textContaining('NP-001'), findsOneWidget);
@@ -67,17 +67,17 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_wrap(const ProductManagementScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     await tester.tap(find.byIcon(Icons.add));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     // Submitting with empty required fields should surface validation
     // errors rather than close the sheet or crash. 'Add Product' text
     // appears twice (the sheet's title and its submit button) — the
     // submit button is the later one in the tree.
     await tester.tap(find.text('Add Product').last);
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Name is required.'), findsOneWidget);
   });

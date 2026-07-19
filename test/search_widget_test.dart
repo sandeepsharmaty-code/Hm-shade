@@ -41,7 +41,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_wrap(const SearchScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Search Shades'), findsOneWidget);
   });
@@ -58,13 +58,13 @@ void main() {
         );
 
     await tester.pumpWidget(_wrap(const SearchScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     await tester.tap(find.widgetWithText(ChoiceChip, 'Products'));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     await tester.enterText(find.byType(TextField), 'Classic');
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Classic Nail Polish'), findsOneWidget);
   });
@@ -73,12 +73,12 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_wrap(const SearchScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     await tester.tap(find.widgetWithText(ChoiceChip, 'Products'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     await tester.enterText(find.byType(TextField), 'NoSuchThing');
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.textContaining('No results for'), findsOneWidget);
   });

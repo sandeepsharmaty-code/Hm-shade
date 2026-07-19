@@ -43,7 +43,7 @@ void main() {
         const FormulaFormScreen(args: FormulaFormScreenArgs()),
       ),
     );
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Add Formula'), findsWidgets);
   });
@@ -64,10 +64,10 @@ void main() {
         const FormulaFormScreen(args: FormulaFormScreenArgs()),
       ),
     );
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     await tester.tap(find.widgetWithText(DropdownButtonFormField<int>, 'Product'));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Classic Nail Polish'), findsOneWidget);
   });
@@ -80,10 +80,10 @@ void main() {
         const FormulaFormScreen(args: FormulaFormScreenArgs()),
       ),
     );
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     await tester.tap(find.text('Create Formula').last);
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Name is required.'), findsOneWidget);
     expect(find.text('Trial code is required.'), findsOneWidget);

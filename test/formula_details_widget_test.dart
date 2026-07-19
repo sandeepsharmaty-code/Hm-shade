@@ -48,7 +48,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.textContaining('could not be found'), findsOneWidget);
   });
@@ -67,7 +67,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Ruby Trial 1'), findsOneWidget);
     expect(find.text('TRL-0001'), findsOneWidget);
@@ -92,16 +92,16 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       expect(find.widgetWithText(ElevatedButton, 'Approve'), findsOneWidget);
       await tester.tap(find.text('Approve'));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // The Approve sheet requires "Approved By".
       await tester.enterText(find.byType(TextFormField).first, 'QA Lead');
       await tester.tap(find.text('Approve').last);
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Locked: Edit is replaced by Create Revision, Delete disappears.
       expect(find.text('Create Revision'), findsOneWidget);

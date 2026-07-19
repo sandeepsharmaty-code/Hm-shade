@@ -39,7 +39,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_wrap(const ShadeManagementScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('No shades found. Tap + to add one.'), findsOneWidget);
   });
@@ -65,7 +65,7 @@ void main() {
         );
 
     await tester.pumpWidget(_wrap(const ShadeManagementScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Ruby Red'), findsOneWidget);
     expect(find.textContaining('SH-001'), findsOneWidget);
@@ -75,7 +75,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_wrap(const ShadeManagementScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.widgetWithText(ChoiceChip, 'Active'), findsOneWidget);
     expect(find.widgetWithText(ChoiceChip, 'Inactive'), findsOneWidget);

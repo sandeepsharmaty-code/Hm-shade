@@ -40,7 +40,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_wrap(const KnowledgeBaseScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Knowledge'), findsWidgets);
     expect(find.text('Approved Formulas'), findsWidgets);
@@ -66,10 +66,10 @@ void main() {
     );
 
     await tester.pumpWidget(_wrap(const KnowledgeBaseScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     await tester.tap(find.text('Approved Formulas'));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Ruby Trial 1'), findsOneWidget);
   });

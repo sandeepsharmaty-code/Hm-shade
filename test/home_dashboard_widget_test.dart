@@ -49,7 +49,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_wrap(const HomeScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('Products'), findsOneWidget);
     expect(find.text('Materials'), findsOneWidget);
@@ -68,7 +68,7 @@ void main() {
         );
 
     await tester.pumpWidget(_wrap(const HomeScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     // With only one product seeded and nothing else, the Products
     // stat card's value text is '1' — checked directly rather than
@@ -83,7 +83,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_wrap(const HomeScreen()));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     for (final String label in <String>[
       'New Shade',
