@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Purpose      : Main Android manifest for Hue Muse Shade AI.
+  Version      : 1.0.0
+  Description  : Flutter embedding v2 manifest. This app is fully
+                 offline (see pubspec.yaml description and
+                 docs/release/ARCHITECTURE_SUMMARY.md) — no cloud,
+                 login, or network calls exist anywhere in lib/, so
+                 no INTERNET permission is requested. image_picker
+                 needs camera/gallery access only, both granted via
+                 the OS picker UI (scoped storage) with no manifest
+                 permission required on modern Android.
+  Change History:
+    1.0.0 - Release Audit (RC-1.0.0) - Initial creation.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:label="Hue Muse Shade AI"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:fullBackupContent="false">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+
+    <!-- Required by image_picker to launch a camera capture intent. -->
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+    </queries>
+</manifest>

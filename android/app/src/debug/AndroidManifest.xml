@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug-only manifest overlay. INTERNET permission here is required
+  by the Flutter tool itself (VM service / hot reload) for debug
+  builds only — it is NOT present in the release manifest and is
+  never merged into release/profile APKs. This does not conflict
+  with the app's offline design.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
+</manifest>

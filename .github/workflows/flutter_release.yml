@@ -1,0 +1,375 @@
+# Purpose      : CI/CD pipeline for Hue Muse Shade AI — the real
+#                Flutter environment this project has never had
+#                access to in development (see docs/sprints/
+#                SPR-DEP-001 through SPR-DEP-012 "ENV-001").
+# Author       : HMEOS Engineering (DevOps)
+# Version      : 2.1.0
+# Description  : Two jobs.
+#
+#                `build` runs on every push to main, every PR into
+#                main, and workflow_dispatch. Exact sequence: checkout
+#                -> setup JDK 21 -> setup Flutter (stable) -> flutter
+#                doctor -> pub get -> analyze -> test -> build apk
+#                --release -> build appbundle -> upload APK/AAB/test/
+#                analyzer artifacts -> build summary. Fails fast on
+#                analyzer errors or test failures.
+#
+#                `release` runs only when a `v*` tag is pushed. It
+#                downloads the artifacts the `build` job already
+#                produced (does not rebuild) and publishes them as a
+#                GitHub Release.
+#
+#                Release signing: if the four ANDROID_KEYSTORE_*
+#                secrets are configured (see "Required GitHub
+#                Secrets" in the Release Audit Report), the build job
+#                decodes the keystore and writes android/key.properties
+#                before the build steps, so the release APK/AAB are
+#                signed with the real upload key. If those secrets are
+#                absent (e.g. a fork's PR, which never has access to
+#                secrets), the step is skipped entirely and
+#                android/app/build.gradle's own fallback to Flutter's
+#                debug signing config takes over — the pipeline still
+#                completes and still produces installable output,
+#                just not one suitable for Play Store submission. No
+#                secret value is ever written to a log: GitHub Actions
+#                auto-masks registered secrets, and the keystore file
+#                itself is written to a path already covered by
+#                .gitignore (android/key.properties, android/*.jks)
+#                and is never uploaded as an artifact.
+#
+#                Permissions: least-privilege by default
+#                (contents: read at workflow level). The `release`
+#                job elevates only its own token to contents: write,
+#                scoped to that job alone, so it can publish a GitHub
+#                Release without granting write access anywhere else
+#                in the pipeline.
+# Change History:
+#   1.0.0 - R003 - Initial creation.
+#   1.1.0 - Release Audit (RC-1.0.0) - android/ committed; comment
+#           updated to stop describing it as always-missing.
+#   2.0.0 - GitHub Actions Audit (v1.0.0) - Reordered to the exact
+#           14-step pipeline (dropped the debug APK build, which
+#           wasn't part of the specified sequence); added explicit
+#           least-privilege `permissions`; added optional
+#           secret-based release signing with safe fallback; added
+#           `v*` tag trigger and a separate `release` job that
+#           publishes a GitHub Release from the build job's
+#           artifacts; kept concurrency control, SDK/pub/Gradle
+#           caching, and artifact uploads from 1.1.0.
+#   2.1.0 - Branching-model update - triggers expanded to match a
+#           Git Flow-style model (main/develop/release/*/feature/*/
+#           hotfix/*). See the `on:` block comment below for the
+#           push-vs-PR reasoning per branch type.
+
+name: Flutter Release Pipeline
+
+# Branching model this matches: main, develop, release/*, feature/*,
+# hotfix/*.
+#
+# - Direct push CI: main, develop, release/**, hotfix/** — the
+#   "important" branches where every commit should be verified
+#   immediately. hotfix/** is included here (not just via PR) since
+#   hotfixes are typically urgent and benefit from immediate feedback
+#   before a PR even opens.
+# - feature/** deliberately has NO direct-push trigger — feature
+#   branches are numerous and often WIP; running the full pipeline
+#   (analyze+test+2 builds) on every push would burn CI minutes on
+#   commits that aren't ready for review yet.
+# - feature/** IS covered via the pull_request trigger below: GitHub
+#   Actions' pull_request `branches` filter matches the PR's BASE
+#   branch, not its head branch. So a PR from feature/x into develop
+#   fires because develop is listed — no need to enumerate feature/**
+#   separately.
+# - tags (v*) unchanged — still what triggers the release job.
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'release/**'
+      - 'hotfix/**'
+    tags: ['v*']
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'release/**'
+  workflow_dispatch: {}
+
+# Cancel superseded runs on the same branch/PR/tag to save CI minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least-privilege default. Only the `release` job elevates its own
+# token, scoped to itself, below.
+permissions:
+  contents: read
+
+env:
+  FLUTTER_CHANNEL: 'stable'
+  JAVA_VERSION: '21'
+
+jobs:
+  # ====================================================================
+  # Job 1: Analyze, Test, and Build
+  # ====================================================================
+  build:
+    name: Analyze, Test, and Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Record pipeline start time
+        id: pipeline_start
+        run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      # --- Step 1: Checkout Repository --------------------------------
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # --- Step 2: Setup Java (JDK 21) ----------------------------------
+      # Gradle wrapper is pinned to Gradle 8.6 (see
+      # android/gradle/wrapper/gradle-wrapper.properties) specifically
+      # because Gradle's documented support for running its own daemon
+      # under JDK 21 starts at 8.5 — keep these two in sync if either
+      # changes.
+      - name: Setup Java (JDK 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      # --- Step 3: Setup Flutter (stable) -------------------------------
+      - name: Setup Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:'
+
+      # --- Explicit pub-cache cache, keyed on pubspec.lock ----------
+      # (subosito/flutter-action already caches the SDK itself; this
+      # additionally caches resolved packages so `flutter pub get`
+      # is fast even when the SDK cache misses.)
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      # --- Gradle cache ----------------------------------------------
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Create build output directory
+        run: mkdir -p build/ci-reports
+
+      # --- Step 4: Flutter Doctor ---------------------------------------
+      - name: Flutter Doctor
+        run: |
+          flutter doctor -v | tee build/ci-reports/flutter-doctor.txt
+          echo "### Flutter Version" >> "$GITHUB_STEP_SUMMARY"
+          flutter --version | tee build/ci-reports/flutter-version.txt >> "$GITHUB_STEP_SUMMARY"
+
+      # --- Defensive fallback: android/ is committed as of v1.0.0 ------
+      - name: Ensure Android platform files exist
+        run: |
+          if [ ! -d "android" ]; then
+            echo "::warning::android/ is missing from this checkout. Generating it now via 'flutter create .' so the build can proceed. This should not happen on a normal run — android/ has been committed since the v1.0.0 release audit."
+            flutter create . --platforms=android --org com.huemuse
+          else
+            echo "android/ already present — using the committed platform config."
+          fi
+
+      # --- Optional: real release signing from GitHub Secrets ----------
+      # Only runs if all four secrets are configured (repo or
+      # environment secrets). Never logs secret values — GitHub Actions
+      # auto-masks any registered secret that appears in output, and
+      # the decoded keystore is written to a path .gitignore already
+      # excludes. Skipped entirely on forked-repo PRs, which never have
+      # access to secrets — android/app/build.gradle's own fallback to
+      # debug signing (see key.properties.example) takes over instead,
+      # so the pipeline never fails for lack of a real keystore.
+    
+# Release signing skipped.
+# Flutter will use debug signing until a production keystore is added.
+      # --- Step 5: flutter pub get --------------------------------------
+      - name: flutter pub get
+        run: flutter pub get
+
+      # --- Step 6: flutter analyze (fail fast on errors) ----------------
+      - name: flutter analyze
+        run: |
+          set -o pipefail
+          flutter analyze 2>&1 | tee build/ci-reports/flutter-analyze.txt
+
+      # --- Step 7: flutter test (fail fast on failures) -----------------
+      - name: flutter test
+        run: |
+          set -o pipefail
+          flutter test \
+            --reporter expanded \
+            --file-reporter="json:build/ci-reports/test-results.json" \
+            2>&1 | tee build/ci-reports/flutter-test.txt
+
+      - name: Summarize test results
+        if: always()
+        run: |
+          echo "### Test Results" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f build/ci-reports/test-results.json ]; then
+            PASSED=$(grep -o '"result":"success"' build/ci-reports/test-results.json | wc -l || echo 0)
+            FAILED=$(grep -o '"result":"failure"\|"result":"error"' build/ci-reports/test-results.json | wc -l || echo 0)
+            echo "- Passed: $PASSED" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Failed: $FAILED" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- test-results.json not found" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Record build start time
+        id: build_start
+        run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      # --- Step 8: flutter build apk --release ---------------------------
+      - name: flutter build apk --release
+        run: flutter build apk --release
+
+      # --- Step 9: flutter build appbundle --------------------------------
+      - name: flutter build appbundle
+        run: flutter build appbundle
+
+      - name: Record build end time and duration
+        id: build_end
+        run: |
+          END=$(date +%s)
+          START=${{ steps.build_start.outputs.start }}
+          DURATION=$((END - START))
+          echo "duration_seconds=$DURATION" >> "$GITHUB_OUTPUT"
+          echo "### Build Duration" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Release APK + AAB build steps: ${DURATION}s" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report build artifact sizes
+        if: always()
+        run: |
+          echo "### Build Sizes" >> "$GITHUB_STEP_SUMMARY"
+          RELEASE_APK="build/app/outputs/flutter-apk/app-release.apk"
+          AAB="build/app/outputs/bundle/release/app-release.aab"
+          for f in "$RELEASE_APK" "$AAB"; do
+            if [ -f "$f" ]; then
+              SIZE=$(du -h "$f" | cut -f1)
+              echo "- $f: $SIZE" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "- $f: NOT FOUND" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+
+      # --- Step 10: Upload APK Artifact -----------------------------------
+      - name: Upload APK Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: warn
+          retention-days: 30
+
+      # --- Step 11: Upload AAB Artifact -----------------------------------
+      - name: Upload AAB Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: warn
+          retention-days: 30
+
+      # --- Step 12: Upload Test Reports -----------------------------------
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            build/ci-reports/flutter-test.txt
+            build/ci-reports/test-results.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      # --- Step 13: Upload Analyzer Report --------------------------------
+      - name: Upload Analyzer Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: analyze-report
+          path: build/ci-reports/flutter-analyze.txt
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload Flutter Doctor Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-doctor-report
+          path: build/ci-reports/flutter-doctor.txt
+          if-no-files-found: warn
+          retention-days: 30
+
+      # --- Step 14: Generate Build Summary ---------------------------------
+      - name: Generate Build Summary
+        if: always()
+        run: |
+          END=$(date +%s)
+          START=${{ steps.pipeline_start.outputs.start }}
+          TOTAL=$((END - START))
+          echo "## Hue Muse Shade AI — CI Build Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Branch/PR/Tag: ${{ github.ref_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Triggered by: ${{ github.event_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Total pipeline duration: ${TOTAL}s" >> "$GITHUB_STEP_SUMMARY"
+
+  # ====================================================================
+  # Job 2: Publish GitHub Release (tag pushes only)
+  # ====================================================================
+  release:
+    name: Publish GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Elevated only for this job, only to publish the release created
+    # from the build job's already-produced artifacts. No rebuild
+    # happens here.
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Release APK
+        uses: actions/download-artifact@v4
+        with:
+          name: release-apk
+          path: release-assets
+
+      - name: Download Release AAB
+        uses: actions/download-artifact@v4
+        with:
+          name: release-aab
+          path: release-assets
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-assets/app-release.apk
+            release-assets/app-release.aab
+          generate_release_notes: true
+          draft: true

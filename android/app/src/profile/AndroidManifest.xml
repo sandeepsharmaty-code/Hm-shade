@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Profile-only manifest overlay. Same rationale as src/debug — the
+  Flutter tool needs INTERNET for profiling only; never merged into
+  the release build.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
+</manifest>

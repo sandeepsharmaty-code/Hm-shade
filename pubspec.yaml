@@ -1,0 +1,50 @@
+name: hue_muse_shade_ai
+description: >
+  Hue Muse Shade AI - Offline cosmetic colour shade development
+  application. Analyzes shade images, detects shade families,
+  searches a local knowledge base, and generates trial formula
+  suggestions for lab approval. Fully offline, no cloud, no login.
+publish_to: 'none'
+version: 1.1.0+2
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management (per approved architecture)
+  provider: ^6.1.2
+
+  # Local persistence (per approved architecture - SQLite only)
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
+  path_provider: ^2.1.4
+
+  # Image capture / selection for shade analysis workflow
+  image_picker: ^1.1.2
+
+  # Deterministic, offline pixel decoding for SPR-DEP-008's Image
+  # Intelligence Foundation. Pure Dart, no AI/ML/cloud — decodes
+  # JPEG/PNG/etc. into raw pixel arrays for colour sampling.
+  image: ^4.2.0
+
+  # Icons consistent with Material Design 3
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^4.0.0
+
+  # Enables running sqflite-based unit tests on the host machine
+  # (desktop/CI) instead of requiring an Android emulator.
+  sqflite_common_ffi: ^2.3.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/

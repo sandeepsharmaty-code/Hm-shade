@@ -1,0 +1,56 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+
+# Android related
+#
+# NOTE (Release Audit, RC-1.0.0): as of v1.0.0, android/ is a real,
+# committed platform folder (previously missing entirely — see
+# docs/release/KNOWN_ISSUES.md item 1) rather than something
+# regenerated fresh by CI on every run. gradlew / gradlew.bat are
+# therefore intentionally NOT ignored below (unlike Flutter's
+# default template) so every checkout has a working, reproducible
+# build without needing `flutter create` to run first.
+# gradle-wrapper.jar remains ignored: it's a binary Flutter's own
+# tooling supplies/refreshes at build time from its bundled
+# template, so it doesn't need to be (and conventionally isn't)
+# committed by hand.
+**/android/**/gradle-wrapper.jar
+**/android/.gradle
+**/android/captures/
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+*.jks
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Exceptions to above rules.
+!/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages

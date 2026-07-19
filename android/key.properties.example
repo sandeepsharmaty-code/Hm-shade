@@ -1,0 +1,23 @@
+# Hue Muse Shade AI — Release Signing Template
+#
+# This is a TEMPLATE, not a real signing config. Copy this file to
+# `android/key.properties` (already .gitignored — never commit the
+# real one) and fill in real values once an upload keystore exists.
+#
+# Until key.properties is created, android/app/build.gradle falls
+# back to Flutter's debug signing config automatically, so
+# `flutter build apk --release` / `flutter build appbundle` still
+# succeed for internal sideload/testing. That debug-signed output is
+# NOT acceptable for Play Store submission — only for internal use.
+#
+# To generate a real upload keystore (do this once, store the
+# .jks/.keystore file and these credentials in a password manager,
+# NOT in git):
+#
+#   keytool -genkey -v -keystore ~/upload-keystore.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+storePassword=REPLACE_WITH_REAL_PASSWORD
+keyPassword=REPLACE_WITH_REAL_PASSWORD
+keyAlias=upload
+storeFile=/absolute/path/to/upload-keystore.jks

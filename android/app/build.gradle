@@ -1,0 +1,119 @@
+// Purpose      : App module build configuration for Hue Muse Shade AI.
+// Version      : 1.0.0
+// Description  : Standard Flutter Android app module. Reads
+//                versionCode/versionName from Flutter's own
+//                local.properties injection (flutter.versionCode /
+//                flutter.versionName), which Flutter derives from
+//                pubspec.yaml's `version:` field automatically — no
+//                manual sync needed between pubspec.yaml and this
+//                file.
+//
+//                Release signing: this file wires a release signing
+//                config that reads from android/key.properties, which
+//                is NOT committed to the repository (see .gitignore).
+//                Until a real upload keystore is provided, release
+//                builds fall back to the Flutter debug signing config
+//                so `flutter build apk --release` / `--appbundle`
+//                still succeed for internal sideload/testing use —
+//                see android/key.properties.example and
+//                docs/release/INSTALLATION_GUIDE.md for how to supply
+//                a real keystore before any Play Store submission.
+// Change History:
+//   1.0.0 - Release Audit (RC-1.0.0) - Initial creation.
+
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader("UTF-8") { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty("flutter.versionCode")
+if (flutterVersionCode == null) {
+    flutterVersionCode = "1"
+}
+
+def flutterVersionName = localProperties.getProperty("flutter.versionName")
+if (flutterVersionName == null) {
+    flutterVersionName = "1.0.0"
+}
+
+// Real release signing (optional). Populate android/key.properties
+// (copy from key.properties.example) with a real upload keystore to
+// enable this. Never commit key.properties or the .jks/.keystore file.
+def keystorePropertiesFile = rootProject.file("key.properties")
+def keystoreProperties = new Properties()
+def hasReleaseSigning = keystorePropertiesFile.exists()
+if (hasReleaseSigning) {
+    keystorePropertiesFile.withReader("UTF-8") { reader ->
+        keystoreProperties.load(reader)
+    }
+}
+
+
+android {
+    namespace "com.huemuse.hue_muse_shade_ai"
+    compileSdk 36
+    ndkVersion flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
+    sourceSets {
+        main.java.srcDirs += "src/main/kotlin"
+    }
+
+    defaultConfig {
+        // Offline-only internal tool: no Play Store listing yet, so
+        // this applicationId is a release-engineering default (see
+        // Release Audit Report, "Assumptions") — confirm/rename before
+        // any public Play Store submission.
+        applicationId "com.huemuse.hue_muse_shade_ai"
+        minSdkVersion 26
+        targetSdkVersion 36
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+    }
+
+    signingConfigs {
+        release {
+            if (hasReleaseSigning) {
+                keyAlias keystoreProperties["keyAlias"]
+                keyPassword keystoreProperties["keyPassword"]
+                storeFile keystoreProperties["storeFile"] ? file(keystoreProperties["storeFile"]) : null
+                storePassword keystoreProperties["storePassword"]
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            // Falls back to debug signing until key.properties (real
+            // keystore) is supplied, so release builds are never
+            // blocked — see header note above.
+            signingConfig = hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
+            // Inert while minifyEnabled is false; wired now so R8
+            // config isn't a last-minute scramble if shrinking is
+            // enabled later. See proguard-rules.pro for rationale.
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+}
+
+flutter {
+    source "../.."
+}

@@ -1,0 +1,40 @@
+#
+# Purpose      : Static analysis configuration enforcing production
+#                quality, zero-warning coding standard for the
+#                Hue Muse Shade AI project.
+# Version      : 1.0.0
+# Dependencies : flutter_lints
+# Description  : Extends the recommended Flutter lint set and adds
+#                stricter rules for null safety, error handling, and
+#                naming discipline as required by project coding
+#                standards.
+# Change History:
+#   1.0.0 - SPR-DEP-001 - Initial creation.
+#
+
+include: package:flutter_lints/flutter.yaml
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  exclude:
+    - test/** 
+  errors:
+    missing_required_param: error
+    missing_return: error
+    todo: ignore
+
+linter:
+  rules:
+    - always_declare_return_types
+    - avoid_print
+    - avoid_empty_else
+    - avoid_relative_lib_imports
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_final_fields
+    - prefer_final_locals
+    - unnecessary_null_checks
+    - unawaited_futures
+    - annotate_overrides

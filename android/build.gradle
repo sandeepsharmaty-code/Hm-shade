@@ -1,0 +1,24 @@
+// Purpose      : Top-level build configuration for all Android
+//                modules in Hue Muse Shade AI.
+// Version      : 1.0.0
+// Change History:
+//   1.0.0 - Release Audit (RC-1.0.0) - Initial creation.
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = "../build"
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(":app")
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
