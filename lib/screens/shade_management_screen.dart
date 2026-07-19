@@ -1,7 +1,7 @@
 /// Purpose      : Shade Management screen — create, list, edit,
 ///                soft-delete, and restore Shade_Master records.
 /// Author       : HMEOS Engineering
-/// Version      : 1.0.0
+/// Version      : 1.0.1
 /// Dependencies : flutter/material.dart, core/di/service_locator.dart,
 ///                repositories/shade_repository.dart,
 ///                repositories/product_repository.dart,
@@ -51,6 +51,13 @@
 /// Change History:
 ///   1.0.0 - Repair Sprint R5 (Missing Business Modules) - Initial
 ///           creation.
+///   1.0.1 - CI Compatibility Repair - `DropdownButtonFormField`'s
+///           `value:` renamed to `initialValue:` (Flutter 3.34+
+///           deprecated `value:` in favor of it) — first real
+///           `flutter analyze` run (GitHub Actions) surfaced this;
+///           no behavior change, same widget, same reactivity. All
+///           4 dropdowns in this file affected (Product filter,
+///           form Product, Finish, Status).
 library;
 
 import 'package:flutter/material.dart';
@@ -311,7 +318,7 @@ class _ShadeManagementScreenState extends State<ShadeManagementScreen> {
                 final bool filterStillPresent = _productFilterId == null ||
                     products.any((ProductModel p) => p.id == _productFilterId);
                 return DropdownButtonFormField<int?>(
-                  value: filterStillPresent ? _productFilterId : null,
+                  initialValue: filterStillPresent ? _productFilterId : null,
                   decoration: const InputDecoration(
                     labelText: 'Product',
                     isDense: true,
@@ -588,7 +595,7 @@ class _ShadeFormSheetState extends State<_ShadeFormSheet> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int?>(
-                  value: _selectedProductId,
+                  initialValue: _selectedProductId,
                   decoration: const InputDecoration(
                     labelText: 'Product (optional)',
                   ),
@@ -624,7 +631,7 @@ class _ShadeFormSheetState extends State<_ShadeFormSheet> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String?>(
-                  value: _finish,
+                  initialValue: _finish,
                   decoration: const InputDecoration(
                     labelText: 'Finish (optional)',
                   ),
@@ -648,7 +655,7 @@ class _ShadeFormSheetState extends State<_ShadeFormSheet> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _status,
+                  initialValue: _status,
                   decoration: const InputDecoration(labelText: 'Status'),
                   items: <DropdownMenuItem<String>>[
                     for (final String status in kShadeStatusOptions)

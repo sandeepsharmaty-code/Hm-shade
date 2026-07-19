@@ -2,7 +2,7 @@
 ///                screen covering Pigment/Dye/Mica/Pearl/Filler/
 ///                Binder_Master, not six separate screens.
 /// Author       : HMEOS Engineering
-/// Version      : 1.0.0
+/// Version      : 1.0.1
 /// Dependencies : flutter/material.dart, core/di/service_locator.dart,
 ///                repositories/{pigment,dye,mica,pearl,filler,binder}
 ///                _repository.dart, repositories/repository_exception.dart,
@@ -72,6 +72,11 @@
 /// Change History:
 ///   1.0.0 - Repair Sprint R5 (Missing Business Modules) - Initial
 ///           creation.
+///   1.0.1 - CI Compatibility Repair - `DropdownButtonFormField`'s
+///           `value:` renamed to `initialValue:` (Flutter 3.34+
+///           deprecated `value:` in favor of it) — first real
+///           `flutter analyze` run (GitHub Actions) surfaced this;
+///           no behavior change, same widget, same reactivity.
 library;
 
 import 'package:flutter/material.dart';
@@ -963,7 +968,7 @@ class _MaterialFormSheetState extends State<_MaterialFormSheet> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: DropdownButtonFormField<String>(
-                      value: _tableKey,
+                      initialValue: _tableKey,
                       decoration: const InputDecoration(labelText: 'Type'),
                       items: <DropdownMenuItem<String>>[
                         for (final _MaterialTypeAdapter adapter

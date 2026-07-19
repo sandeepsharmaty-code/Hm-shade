@@ -1,7 +1,7 @@
 /// Purpose      : Product Management screen — create, list, edit, and
 ///                soft-delete Product_Master records.
 /// Author       : HMEOS Engineering
-/// Version      : 1.2.0
+/// Version      : 1.2.1
 /// Dependencies : flutter/material.dart, core/di/service_locator.dart,
 ///                core/routing/app_routes.dart,
 ///                repositories/product_repository.dart,
@@ -43,6 +43,11 @@
 ///           "View Shades" icon button per product row, pushing
 ///           AppRoutes.shadeManagement with that product's id — same
 ///           pattern as "View Formulas" above.
+///   1.2.1 - CI Compatibility Repair - `DropdownButtonFormField`'s
+///           `value:` renamed to `initialValue:` (Flutter 3.34+
+///           deprecated `value:` in favor of it) — first real
+///           `flutter analyze` run (GitHub Actions) surfaced this;
+///           no behavior change, same widget, same reactivity.
 library;
 
 import 'package:flutter/material.dart';
@@ -438,7 +443,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _category,
+                  initialValue: _category,
                   decoration: const InputDecoration(labelText: 'Category'),
                   items: <DropdownMenuItem<String>>[
                     for (final String category in kApprovedProductCategories)

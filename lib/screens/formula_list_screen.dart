@@ -2,7 +2,7 @@
 ///                by Product, with search, refresh, and (R3) in-
 ///                screen Product and Status filters.
 /// Author       : HMEOS Engineering
-/// Version      : 2.0.0
+/// Version      : 2.0.1
 /// Dependencies : flutter/material.dart, core/di/service_locator.dart,
 ///                core/routing/app_routes.dart,
 ///                repositories/product_repository.dart,
@@ -49,6 +49,11 @@
 ///           (chips) plus a Product filter dropdown, satisfying
 ///           R3-002 by extending this screen instead of duplicating
 ///           it — see the note above.
+///   2.0.1 - CI Compatibility Repair - `DropdownButtonFormField`'s
+///           `value:` renamed to `initialValue:` (Flutter 3.34+
+///           deprecated `value:` in favor of it) — first real
+///           `flutter analyze` run (GitHub Actions) surfaced this;
+///           no behavior change, same widget, same reactivity.
 library;
 
 import 'package:flutter/material.dart';
@@ -297,7 +302,7 @@ class _FormulaListScreenState extends State<FormulaListScreen> {
                 final bool filterStillPresent = _productFilterId == null ||
                     products.any((ProductModel p) => p.id == _productFilterId);
                 return DropdownButtonFormField<int?>(
-                  value: filterStillPresent ? _productFilterId : null,
+                  initialValue: filterStillPresent ? _productFilterId : null,
                   decoration: const InputDecoration(
                     labelText: 'Product',
                     isDense: true,

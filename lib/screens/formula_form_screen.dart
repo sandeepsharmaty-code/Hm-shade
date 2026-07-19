@@ -1,7 +1,7 @@
 /// Purpose      : Formula create/edit screen — Trial_Formula fields
 ///                plus a dynamic Formula_Material ingredients editor.
 /// Author       : HMEOS Engineering
-/// Version      : 2.0.0
+/// Version      : 2.0.1
 /// Dependencies : flutter/material.dart, core/di/service_locator.dart,
 ///                repositories/product_repository.dart,
 ///                repositories/shade_repository.dart,
@@ -40,6 +40,13 @@
 ///   2.0.0 - Repair Sprint R3 (Approved Formula Workflow) - Added
 ///           `duplicateFromTrialFormulaId` / Create Revision mode
 ///           (R3-008). No change to Create/Edit behavior otherwise.
+///   2.0.1 - CI Compatibility Repair - `DropdownButtonFormField`'s
+///           `value:` renamed to `initialValue:` (Flutter 3.34+
+///           deprecated `value:` in favor of it) — first real
+///           `flutter analyze` run (GitHub Actions) surfaced this;
+///           no behavior change, same widget, same reactivity. All
+///           4 dropdowns in this file affected (Product, Shade,
+///           Material Type, Material).
 library;
 
 import 'package:flutter/material.dart';
@@ -573,7 +580,7 @@ class _FormulaFormScreenState extends State<FormulaFormScreen> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<int>(
-            value: _selectedProductId,
+            initialValue: _selectedProductId,
             decoration: const InputDecoration(labelText: 'Product'),
             items: <DropdownMenuItem<int>>[
               for (final ProductModel product in _products)
@@ -588,7 +595,7 @@ class _FormulaFormScreenState extends State<FormulaFormScreen> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<int?>(
-            value: _selectedShadeId,
+            initialValue: _selectedShadeId,
             decoration: const InputDecoration(labelText: 'Shade (optional)'),
             items: <DropdownMenuItem<int?>>[
               const DropdownMenuItem<int?>(value: null, child: Text('No shade')),
@@ -836,7 +843,7 @@ class _IngredientEditorSheetState extends State<_IngredientEditorSheet> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: _selectedTable,
+                  initialValue: _selectedTable,
                   decoration: const InputDecoration(
                     labelText: 'Material Type',
                   ),
@@ -857,7 +864,7 @@ class _IngredientEditorSheetState extends State<_IngredientEditorSheet> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int>(
-                  value: _selectedMaterialId,
+                  initialValue: _selectedMaterialId,
                   decoration: const InputDecoration(labelText: 'Material'),
                   items: <DropdownMenuItem<int>>[
                     for (final RawMaterialModel material in materials)
