@@ -111,16 +111,26 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     _productsFuture = _loadProducts();
   }
 
-  Future<List<ProductModel>> _loadProducts() {
-    final String query = _query.trim();
-    if (query.isEmpty) {
-      return _productRepository.readAll();
-    }
-    return _productRepository.search(
-      query,
-      columns: const <String>['name', 'product_code', 'category'],
-    );
-  }
+ Future<List<ProductModel>> _loadProducts() async {
+  debugPrint('LOAD PRODUCTS START');
+
+  final String query = _query.trim();
+
+  final List<ProductModel> result = query.isEmpty
+      ? await _productRepository.readAll()
+      : await _productRepository.search(
+          query,
+          columns: const <String>[
+            'name',
+            'product_code',
+            'category',
+          ],
+        );
+
+  debugPrint('LOAD PRODUCTS END: ${result.length}');
+
+  return result;
+}
 
   void _refresh() {
     setState(() => _productsFuture = _loadProducts());

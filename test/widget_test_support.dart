@@ -299,9 +299,10 @@ class WidgetTestHarness {
     return harness;
   }
 
-  Future<void> close() async {
-    ServiceLocator.instance.reset();
-  }
+ Future<void> close() async {
+  ServiceLocator.instance.reset();
+  await _db.close();
+}
 
   void _registerAll() {
     final ProductRepository productRepository = ProductRepository(
