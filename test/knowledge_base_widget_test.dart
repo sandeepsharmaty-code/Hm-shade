@@ -39,14 +39,20 @@ void main() {
   testWidgets('shows all four tabs and the Knowledge empty state', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(_wrap(const KnowledgeBaseScreen()));
-    await settle(tester);
+   await tester.pumpWidget(_wrap(const KnowledgeBaseScreen()));
 
-    expect(find.text('Knowledge'), findsWidgets);
-    expect(find.text('Approved Formulas'), findsWidgets);
-    expect(find.text('Rules'), findsWidgets);
-    expect(find.text('Recent Updates'), findsWidgets);
-    expect(find.text('Knowledge Base is empty.'), findsOneWidget);
+await tester.pump();
+await tester.pump(const Duration(milliseconds: 200));
+
+debugPrint('Knowledge animations: ${tester.hasRunningAnimations}');
+
+expect(find.byType(CircularProgressIndicator), findsNothing);
+
+expect(find.text('Knowledge'), findsWidgets);
+expect(find.text('Approved Formulas'), findsWidgets);
+expect(find.text('Rules'), findsWidgets);
+expect(find.text('Recent Updates'), findsWidgets);
+expect(find.text('Knowledge Base is empty.'), findsOneWidget);
   });
 
   testWidgets('Approved Formulas tab shows a formula approved via R3', (
@@ -66,7 +72,8 @@ void main() {
     );
 
     await tester.pumpWidget(_wrap(const KnowledgeBaseScreen()));
-    await settle(tester);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
 
     await tester.tap(find.text('Approved Formulas'));
     await settle(tester);
