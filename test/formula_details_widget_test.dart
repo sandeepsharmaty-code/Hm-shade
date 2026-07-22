@@ -94,6 +94,12 @@ void main() {
       );
       await settle(tester);
 
+      await tester.scrollUntilVisible(
+        find.widgetWithText(ElevatedButton, 'Approve'),
+        200,
+      );
+      await settle(tester);
+
       expect(find.widgetWithText(ElevatedButton, 'Approve'), findsOneWidget);
       await tester.tap(find.text('Approve'));
       await settle(tester);
