@@ -28,6 +28,12 @@ void main() {
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(
           version: 1,
+          // See widget_test_support.dart's _openTestDatabase — without
+          // this, sqflite's default singleInstance:true (keyed by the
+          // literal path string ':memory:') shares one connection
+          // across every test file that opens an in-memory database
+          // this way, once flutter test runs them concurrently.
+          singleInstance: false,
           onCreate: (db, version) async {
             final batch = db.batch();
             for (final table in DatabaseHelper.approvedTables) {
