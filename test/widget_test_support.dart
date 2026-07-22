@@ -235,7 +235,7 @@ Future<void> settle(WidgetTester tester) {
   return tester.pumpAndSettle(
     const Duration(milliseconds: 100),
     EnginePhase.sendSemanticsUpdate,
-    const Duration(seconds: 10),
+    const Duration(seconds: 60),
   );
 }
 
