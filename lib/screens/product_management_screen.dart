@@ -133,10 +133,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
 
   void _handleQueryChanged(String value) {
     setState(() {
-      _query = value;
-      _productsFuture = _loadProducts();
+      _recordsFuture = _loadRecords();
     });
-  }
 
   void _showMessage(String message) {
     if (!mounted) {
