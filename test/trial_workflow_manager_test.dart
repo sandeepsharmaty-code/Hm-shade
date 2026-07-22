@@ -38,6 +38,7 @@ Future<Database> _openTestDatabase() async {
     inMemoryDatabasePath,
     options: OpenDatabaseOptions(
       version: 1,
+      singleInstance: false,
       onCreate: (Database db, int version) async {
         await db.execute('''
           CREATE TABLE Trial_Formula (
