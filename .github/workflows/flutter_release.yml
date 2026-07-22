@@ -218,7 +218,6 @@ jobs:
         run: |
           set -o pipefail
           flutter test \
-            --concurrency=1 \
             --reporter expanded \
             --file-reporter="json:build/ci-reports/test-results.json" \
             2>&1 | tee build/ci-reports/flutter-test.txt
