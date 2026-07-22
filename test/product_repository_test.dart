@@ -32,6 +32,15 @@ Future<Database> _openTestDatabase() async {
     inMemoryDatabasePath,
     options: OpenDatabaseOptions(
       version: 1,
+      // singleInstance defaults to true in sqflite, keyed by path —
+      // and inMemoryDatabasePath is the literal string ':memory:', so
+      // without this every test file opening an in-memory database
+      // this way (this file, database_helper_test.dart, and
+      // widget_test_support.dart) shared one real connection when
+      // flutter test ran them concurrently. See
+      // widget_test_support.dart's _openTestDatabase for the full
+      // writeup — same fix applied here for the same reason.
+      singleInstance: false,
       onCreate: (Database db, int version) async {
         await db.execute('''
           CREATE TABLE Product_Master (
