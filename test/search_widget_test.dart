@@ -24,7 +24,7 @@ import 'package:hue_muse_shade_ai/screens/search_screen.dart';
 
 import 'widget_test_support.dart';
 
-Widget _wrap(Widget child) => MaterialApp(home: child);
+Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
 void main() {
   late WidgetTestHarness harness;
