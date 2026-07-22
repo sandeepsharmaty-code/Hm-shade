@@ -82,7 +82,7 @@ void main() {
     );
     await settle(tester);
 
-    await tester.scrollUntilVisible(find.text('Create Formula').last, 200);
+    await tester.drag(find.byType(ListView), const Offset(0, -400));
     await settle(tester);
     await tester.tap(find.text('Create Formula').last);
     await settle(tester);
