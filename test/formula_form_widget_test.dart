@@ -82,6 +82,8 @@ void main() {
     );
     await settle(tester);
 
+    await tester.scrollUntilVisible(find.text('Create Formula').last, 200);
+    await settle(tester);
     await tester.tap(find.text('Create Formula').last);
     await settle(tester);
 
