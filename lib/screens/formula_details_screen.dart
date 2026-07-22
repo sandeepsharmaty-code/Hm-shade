@@ -292,9 +292,12 @@ class _FormulaDetailsScreenState extends State<FormulaDetailsScreen> {
       return null;
     }
   }
+void _refresh() {
+    setState(() {
+      _detailsFuture = _loadDetails();
+    });
+  }
 
-  void _refresh() {
-    setState(() => _detailsFuture = _loadDetails());
   }
 
   void _showMessage(String message) {
