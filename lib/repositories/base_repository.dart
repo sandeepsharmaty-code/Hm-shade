@@ -75,7 +75,20 @@ abstract class BaseSqliteRepository<T> {
       final Database db = await _db;
       final Map<String, Object?> map = toMap(entity)..remove('id');
       final int id = await db.insert(tableName, map);
-      final Map<String, Object?>? row = await _readRowById(db, id);
+      // Always includeInactive here: this is reading back the row we
+      // just inserted to hydrate the returned object, not a normal
+      // "give me active records" query. Without this, create() could
+      // never succeed for an entity created with isActive: false —
+      // _readRowById's default WHERE id = ? AND is_active = 1 would
+      // never match the row it just inserted, and this would throw
+      // below on every such call. Reproduced deterministically by
+      // material_matching_engine_test.dart's "an inactive material is
+      // not approved and gets a warning" test.
+      final Map<String, Object?>? row = await _readRowById(
+        db,
+        id,
+        includeInactive: true,
+      );
       if (row == null) {
         throw const RepositoryException(
           message: 'Record could not be read back after creation.',
