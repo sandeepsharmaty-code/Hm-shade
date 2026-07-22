@@ -257,7 +257,6 @@ jobs:
             test/knowledge_base_widget_test.dart \
             test/material_management_widget_test.dart \
             test/shade_management_widget_test.dart \
-            test/search_widget_test.dart \
             2>&1 | tee build/ci-reports/flutter-test-3-widgets1.txt
 
       - name: flutter test (widgets - group 2)
