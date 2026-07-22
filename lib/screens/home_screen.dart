@@ -241,7 +241,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _refresh() {
-    setState(() => _summaryFuture = _loadSummary());
+    setState(() {
+      _summaryFuture = _loadSummary();
+    });
   }
 
   Future<void> _openProductManagement() async {
