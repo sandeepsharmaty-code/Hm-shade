@@ -62,6 +62,33 @@
 ///   1.1.0 - R7.1 (Final Release Validation fix) - Added settle()
 ///           and ensureSqfliteFfiInitialized() — see the two notes
 ///           above. No change to what is registered or how.
+///   1.2.0 - R7.2 (CI fix, first real toolchain run's findings) -
+///           _openTestDatabase now passes singleInstance: false.
+///           sqflite defaults singleInstance to true, keyed by path;
+///           inMemoryDatabasePath is the fixed string ':memory:', so
+///           every widget-test file plus product_repository_test.dart
+///           and database_helper_test.dart (all three open ':memory:'
+///           databases the same undocumented-default way) were
+///           actually sharing one real connection once `flutter test`
+///           ran them concurrently — not the isolated database each
+///           file's own setUp() believed it had. That explains both
+///           CI symptoms at once: "database has already been closed"
+///           errors on tables unrelated to whatever test was
+///           running (one file's tearDown closing "its" db actually
+///           closed everyone's), and per-test hangs landing on
+///           flutter_test's 10-minute default timeout roughly every
+///           ten minutes (lock contention on that one shared native
+///           connection from concurrent isolates). close() also now
+///           tolerates an already-closed database rather than
+///           throwing, as a non-load-bearing second line of defense.
+///           Applied the same singleInstance: false fix to the other
+///           two files independently. Written from log analysis of
+///           this project's first-ever real `flutter test` run
+///           (previously never executed — see README/KNOWN_ISSUES);
+///           not verified against a second real run, since no Flutter
+///           toolchain is available here either. Treat as a strong,
+///           well-evidenced fix, not a confirmed one, until CI runs
+///           green.
 library;
 
 import 'package:flutter/material.dart';
@@ -224,13 +251,24 @@ const Map<String, List<String>> _kTestSchemaColumns = <String, List<String>>{
   ],
 };
 
-/// Same as `tester.pumpAndSettle()`, but with an explicit 10-second
+/// Same as `tester.pumpAndSettle()`, but with an explicit 60-second
 /// timeout instead of pumpAndSettle()'s own 10-minute default — see
 /// this file's header for why that default is the literal source of
 /// the "TimeoutException after 10 minutes" CI hit. Behaves exactly
 /// like pumpAndSettle() otherwise (same pump interval, same engine
 /// phase) for any test that genuinely settles, which is every test
 /// against this harness's fast in-memory database.
+///
+/// R7.4: was 10 seconds. On GitHub Actions' shared runners the very
+/// first widget test in the whole suite pays a one-time cost (JIT
+/// warm-up across the widget/rendering pipeline, native sqlite3
+/// library load via FFI) that can genuinely exceed 10 real seconds on
+/// a slow or contended runner — that is a false-positive "timed out",
+/// not a real hang, and it was reproduced even with
+/// `flutter test --concurrency=1` (no other file running) on the
+/// simplest possible test (an empty-state screen, zero rows). 60
+/// seconds gives real cold-start slowness room without reintroducing
+/// pumpAndSettle's own default of a full 10 minutes.
 Future<void> settle(WidgetTester tester) {
   return tester.pumpAndSettle(
     const Duration(milliseconds: 100),
@@ -260,6 +298,22 @@ Future<Database> _openTestDatabase() async {
     inMemoryDatabasePath,
     options: OpenDatabaseOptions(
       version: 1,
+      // R7.2 fix — see this file's header. sqflite defaults
+      // `singleInstance` to true, keyed by path. inMemoryDatabasePath
+      // is the literal string ':memory:', so every test file in this
+      // suite (and product_repository_test.dart /
+      // database_helper_test.dart, which open their own ':memory:'
+      // databases the same way) was handed back the *same* cached
+      // connection instead of a private one. `flutter test` runs
+      // files concurrently, so one file's tearDown closing "its" db
+      // silently closed every other file's db mid-query — the exact
+      // shape of the "database has already been closed" cascade and
+      // the staggered ~10-minute per-test hangs seen in CI (contended
+      // access to one shared native connection from concurrent
+      // isolates). false forces a genuinely independent in-memory
+      // database per open() call, matching this class's own doc
+      // comment ("an isolated in-memory database").
+      singleInstance: false,
       onCreate: (Database db, int version) async {
         final Batch batch = db.batch();
         for (final MapEntry<String, List<String>> entry
@@ -299,10 +353,24 @@ class WidgetTestHarness {
     return harness;
   }
 
- Future<void> close() async {
-  ServiceLocator.instance.reset();
-  await _db.close();
-}
+  Future<void> close() async {
+    ServiceLocator.instance.reset();
+    // Defensive, not load-bearing now that singleInstance: false makes
+    // each harness's database genuinely private: a stray unawaited
+    // Future from a disposed widget (e.g. a fire-and-forget initState
+    // load) could still resolve after this point and touch a closed
+    // connection. That should no longer happen with real test
+    // isolation, but swallowing "already closed" here means it can
+    // never again cascade into a later test the way it did before
+    // this fix, however it happens.
+    try {
+      await _db.close();
+    } on Object catch (error) {
+      if (!'$error'.contains('already been closed')) {
+        rethrow;
+      }
+    }
+  }
 
   void _registerAll() {
     final ProductRepository productRepository = ProductRepository(
