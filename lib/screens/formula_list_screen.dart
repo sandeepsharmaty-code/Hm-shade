@@ -215,10 +215,8 @@ class _FormulaListScreenState extends State<FormulaListScreen> {
 
   void _handleStatusFilterChanged(TrialStatus? status) {
     setState(() {
-      _statusFilter = status;
       _groupsFuture = _loadGroups();
     });
-  }
 
   Future<void> _openDetails(TrialFormulaModel trial) async {
     final int? id = trial.id;
