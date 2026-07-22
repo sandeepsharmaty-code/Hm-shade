@@ -213,28 +213,82 @@ jobs:
           set -o pipefail
           flutter analyze 2>&1 | tee build/ci-reports/flutter-analyze.txt
 
-      # --- Step 7: flutter test (fail fast on failures) -----------------
-      - name: flutter test
+      
+# --- Step 7: flutter test (fail fast on failures) -----------------
+      - name: flutter test (unit - engines & models)
+        timeout-minutes: 8
         run: |
           set -o pipefail
           flutter test \
             --reporter expanded \
-            --file-reporter="json:build/ci-reports/test-results.json" \
-            2>&1 | tee build/ci-reports/flutter-test.txt
+            --file-reporter="json:build/ci-reports/test-results-1-unit.json" \
+            test/color_conversion_engine_test.dart \
+            test/dominant_color_engine_test.dart \
+            test/match_type_test.dart \
+            test/shade_engine_test.dart \
+            test/trial_status_test.dart \
+            test/trial_status_chip_test.dart \
+            test/recommendation_ranker_test.dart \
+            test/rule_evaluator_test.dart \
+            2>&1 | tee build/ci-reports/flutter-test-1-unit.txt
+
+      - name: flutter test (unit - database-backed)
+        timeout-minutes: 8
+        run: |
+          set -o pipefail
+          flutter test \
+            --reporter expanded \
+            --file-reporter="json:build/ci-reports/test-results-2-db.json" \
+            test/database_helper_test.dart \
+            test/product_repository_test.dart \
+            test/rule_engine_test.dart \
+            test/material_matching_engine_test.dart \
+            test/trial_workflow_manager_test.dart \
+            2>&1 | tee build/ci-reports/flutter-test-2-db.txt
+
+      - name: flutter test (widgets - group 1)
+        timeout-minutes: 8
+        run: |
+          set -o pipefail
+          flutter test \
+            --reporter expanded \
+            --file-reporter="json:build/ci-reports/test-results-3-widgets1.json" \
+            test/product_management_widget_test.dart \
+            test/knowledge_base_widget_test.dart \
+            test/material_management_widget_test.dart \
+            test/shade_management_widget_test.dart \
+            test/search_widget_test.dart \
+            2>&1 | tee build/ci-reports/flutter-test-3-widgets1.txt
+
+      - name: flutter test (widgets - group 2)
+        timeout-minutes: 8
+        run: |
+          set -o pipefail
+          flutter test \
+            --reporter expanded \
+            --file-reporter="json:build/ci-reports/test-results-4-widgets2.json" \
+            test/formula_form_widget_test.dart \
+            test/formula_list_widget_test.dart \
+            test/formula_details_widget_test.dart \
+            test/home_dashboard_widget_test.dart \
+            2>&1 | tee build/ci-reports/flutter-test-4-widgets2.txt
 
       - name: Summarize test results
         if: always()
         run: |
           echo "### Test Results" >> "$GITHUB_STEP_SUMMARY"
-          if [ -f build/ci-reports/test-results.json ]; then
-            PASSED=$(grep -o '"result":"success"' build/ci-reports/test-results.json | wc -l || echo 0)
-            FAILED=$(grep -o '"result":"failure"\|"result":"error"' build/ci-reports/test-results.json | wc -l || echo 0)
-            echo "- Passed: $PASSED" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Failed: $FAILED" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "- test-results.json not found" >> "$GITHUB_STEP_SUMMARY"
-          fi
-
+          PASSED=0
+          FAILED=0
+          for f in build/ci-reports/test-results-*.json; do
+            if [ -f "$f" ]; then
+              P=$(grep -o '"result":"success"' "$f" | wc -l || echo 0)
+              F=$(grep -o '"result":"failure"\|"result":"error"' "$f" | wc -l || echo 0)
+              PASSED=$((PASSED + P))
+              FAILED=$((FAILED + F))
+            fi
+          done
+          echo "- Passed: $PASSED" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Failed: $FAILED" >> "$GITHUB_STEP_SUMMARY"
       - name: Record build start time
         id: build_start
         run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
