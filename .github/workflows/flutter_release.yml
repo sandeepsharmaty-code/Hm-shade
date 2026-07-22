@@ -258,6 +258,16 @@ jobs:
             test/material_management_widget_test.dart \
             test/shade_management_widget_test.dart \
             2>&1 | tee build/ci-reports/flutter-test-3-widgets1.txt
+            
+      - name: flutter test (widgets - search, isolated)
+        timeout-minutes: 8
+        run: |
+          set -o pipefail
+          flutter test \
+            --reporter expanded \
+            --file-reporter="json:build/ci-reports/test-results-3b-search.json" \
+            test/search_widget_test.dart \
+            2>&1 | tee build/ci-reports/flutter-test-3b-search.txt
 
       - name: flutter test (widgets - group 2)
         timeout-minutes: 8
