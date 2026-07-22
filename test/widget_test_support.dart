@@ -346,14 +346,38 @@ class WidgetTestHarness {
   final DatabaseHelper databaseHelper;
 
   static Future<WidgetTestHarness> open() async {
+    // R7.5 diagnostic instrumentation — see this file's header. Every
+    // fix attempt so far (singleInstance: false, settle() 10s->60s)
+    // measurably helped but did not eliminate a recurring pattern of
+    // individual tests hanging the full real 10-minute
+    // flutter_test default, roughly every ten minutes, each time on a
+    // different test. Static reading of the suspect screens/
+    // repositories hasn't found a logic bug. This prints real
+    // wall-clock durations for open()/close() so the next CI log
+    // shows directly whether a specific harness cycle is the one that
+    // stalls (and how long it actually took), instead of another
+    // inferred theory.
+    final Stopwatch stopwatch = Stopwatch()..start();
     final Database db = await _openTestDatabase();
     final DatabaseHelper helper = DatabaseHelper.forTesting(db);
     final WidgetTestHarness harness = WidgetTestHarness._(db, helper);
     harness._registerAll();
+    stopwatch.stop();
+    if (stopwatch.elapsed > const Duration(seconds: 1)) {
+      // Only log the slow ones — printing on every one of ~200 calls
+      // would flood the log. Anything over 1 real second for opening
+      // an in-memory database plus registering 16 objects is already
+      // abnormal.
+      debugPrint(
+        '[R7.5 diag] WidgetTestHarness.open() took '
+        '${stopwatch.elapsedMilliseconds}ms (real time)',
+      );
+    }
     return harness;
   }
 
   Future<void> close() async {
+    final Stopwatch stopwatch = Stopwatch()..start();
     ServiceLocator.instance.reset();
     // Defensive, not load-bearing now that singleInstance: false makes
     // each harness's database genuinely private: a stray unawaited
@@ -369,6 +393,13 @@ class WidgetTestHarness {
       if (!'$error'.contains('already been closed')) {
         rethrow;
       }
+    }
+    stopwatch.stop();
+    if (stopwatch.elapsed > const Duration(seconds: 1)) {
+      debugPrint(
+        '[R7.5 diag] WidgetTestHarness.close() took '
+        '${stopwatch.elapsedMilliseconds}ms (real time)',
+      );
     }
   }
 
