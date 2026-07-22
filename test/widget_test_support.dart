@@ -294,7 +294,7 @@ void ensureSqfliteFfiInitialized() {
 
 Future<Database> _openTestDatabase() async {
   ensureSqfliteFfiInitialized();
-  return databaseFactoryFfi.openDatabase(
+  return databaseFactoryFfiNoIsolate.openDatabase(
     inMemoryDatabasePath,
     options: OpenDatabaseOptions(
       version: 1,
