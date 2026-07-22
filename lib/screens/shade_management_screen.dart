@@ -157,7 +157,9 @@ class _ShadeManagementScreenState extends State<ShadeManagementScreen> {
   }
 
   void _refresh() {
-    setState(() => _shadesFuture = _loadShades());
+    setState(() {
+      _shadesFuture = _loadShades();
+    });
   }
 
   void _handleQueryChanged(String value) {
