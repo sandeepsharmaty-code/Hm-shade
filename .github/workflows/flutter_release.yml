@@ -353,8 +353,8 @@ jobs:
         with:
           name: test-results
           path: |
-            build/ci-reports/flutter-test.txt
-            build/ci-reports/test-results.json
+            build/ci-reports/flutter-test-*.txt
+            build/ci-reports/test-results-*.json
           if-no-files-found: warn
           retention-days: 30
 
